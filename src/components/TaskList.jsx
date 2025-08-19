@@ -1,32 +1,23 @@
 import React from "react";
-import { Draggable } from "react-beautiful-dnd";
 import TaskItem from "./TaskItem";
 
-export default function TaskList({ items, onDelete, onEdit }) {
-  if (items.length === 0) {
-    return <div className="empty">No tasks yet</div>;
-  }
-
+const TaskList = ({ items, onDelete, onEdit }) => {
   return (
     <ul className="tasklist">
-      {items.map((task, index) => (
-        <Draggable
-          draggableId={task._id.toString()}
-          index={index}
-          key={task._id}
-        >
-          {(provided) => (
-            <li
-              className="task"
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-            >
-              <TaskItem task={task} onDelete={onDelete} onEdit={onEdit} />
-            </li>
-          )}
-        </Draggable>
-      ))}
+      {items.length === 0 ? (
+        <div className="empty">No tasks yet</div>
+      ) : (
+        items.map((task) => (
+          <TaskItem
+            key={task._id}
+            task={task}
+            onDelete={onDelete}
+            onEdit={onEdit}
+          />
+        ))
+      )}
     </ul>
   );
-}
+};
+
+export default TaskList;

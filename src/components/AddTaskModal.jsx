@@ -1,44 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-const AddTaskModal = ({ isOpen, onClose, onSave, status }) => {
-  const [title, setTitle] = useState("");
+const AddTaskModal = ({ title, value, onChange, onClose, onSubmit }) => {
+  const inputRef = useRef(null);
 
-  const handleSubmit = () => {
-    if (!title.trim()) return;
-    onSave({ title, status });
-    setTitle("");
-    onClose();
-  };
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-xl w-80 shadow-lg">
-        <h2 className="text-lg font-bold mb-4">
-          Add Task ({status})
-        </h2>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter task title"
-          className="w-full p-2 border rounded mb-4"
-        />
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-3 py-1 bg-gray-300 rounded"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-3 py-1 bg-blue-500 text-white rounded"
-          >
-            Add
+    <div className="modal__backdrop">
+      <div className="modal">
+        <div className="modal__header">
+          <h3>{title}</h3>
+          <button className="iconBtn" onClick={onClose}>
+            ✕
           </button>
         </div>
+        <form onSubmit={onSubmit} className="modal__form">
+          <label className="label">
+            Task title
+            <input
+              ref={inputRef}
+              className="input"
+              placeholder="Type task…"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+            />
+          </label>
+          <button
+            type="submit"
+            className="btn primary"
+            disabled={!value.trim()}
+          >
+            Add Task
+          </button>
+        </form>
       </div>
     </div>
   );
