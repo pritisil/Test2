@@ -10,7 +10,11 @@ export default function TaskList({ items, onDelete, onEdit }) {
   return (
     <ul className="tasklist">
       {items.map((task, index) => (
-        <Draggable draggableId={task.id.toString()} index={index} key={task.id}>
+        <Draggable
+          draggableId={task._id.toString()}
+          index={index}
+          key={task._id}
+        >
           {(provided) => (
             <li
               className="task"

@@ -102,29 +102,19 @@ export default function App() {
   // ✅ Drag and drop handler (update status in DB)
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
-    if (!destination) return;
+    if (!destination || source.droppableId === destination.droppableId) return;
 
-    const sourceStatus = source.droppableId;
     const destStatus = destination.droppableId;
 
-    if (sourceStatus === STATUSES.DONE && destStatus !== STATUSES.DONE) return;
-
-    if (
-      (sourceStatus === STATUSES.TODO && destStatus === STATUSES.INPROGRESS) ||
-      (sourceStatus === STATUSES.INPROGRESS && destStatus === STATUSES.TODO) ||
-      (destStatus === STATUSES.DONE && sourceStatus !== STATUSES.DONE) ||
-      (sourceStatus === destStatus)
-    ) {
-      try {
-        const res = await axios.put(`${API_URL}/${draggableId}`, {
-          status: destStatus,
-        });
-        setTasks((prev) =>
-          prev.map((t) => (t._id === draggableId ? res.data : t))
-        );
-      } catch (err) {
-        console.error("Error updating task status:", err);
-      }
+    try {
+      const res = await axios.put(`${API_URL}/${draggableId}`, {
+        status: destStatus,
+      });
+      setTasks((prev) =>
+        prev.map((t) => (t._id.toString() === draggableId ? res.data : t))
+      );
+    } catch (err) {
+      console.error("Error updating task status:", err);
     }
   };
 
@@ -139,6 +129,7 @@ export default function App() {
       <DragDropContext onDragEnd={onDragEnd}>
         <main className="board">
           <Column
+            key={STATUSES.TODO}
             title="Todo"
             status={STATUSES.TODO}
             showAdd
@@ -152,6 +143,7 @@ export default function App() {
           </Column>
 
           <Column
+            key={STATUSES.INPROGRESS}
             title="In Progress"
             status={STATUSES.INPROGRESS}
             showAdd
@@ -164,7 +156,7 @@ export default function App() {
             />
           </Column>
 
-          <Column title="Done" status={STATUSES.DONE}>
+          <Column key={STATUSES.DONE} title="Done" status={STATUSES.DONE}>
             <TaskList
               items={tasksByStatus(STATUSES.DONE)}
               onDelete={openDeleteModal}
@@ -221,7 +213,7 @@ function Column({ title, status, showAdd = false, onAdd, children }) {
           </button>
         )}
       </div>
-      <Droppable droppableId={status}>
+      <Droppable droppableId={status} type="TASK" isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
         {(provided) => (
           <div
             className="column__body"
@@ -238,25 +230,26 @@ function Column({ title, status, showAdd = false, onAdd, children }) {
 }
 
 function TaskList({ items, onDelete, onEdit }) {
-  if (items.length === 0) {
-    return <div className="empty">No tasks yet</div>;
-  }
   return (
     <ul className="tasklist">
-      {items.map((task, index) => (
-        <Draggable draggableId={task.id.toString()} index={index} key={task.id}>
-          {(provided) => (
-            <li
-              className="task"
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-            >
-              <TaskItem task={task} onDelete={onDelete} onEdit={onEdit} />
-            </li>
-          )}
-        </Draggable>
-      ))}
+      {items.length === 0 ? (
+        <div className="empty">No tasks yet</div>
+      ) : (
+        items.map((task, index) => (
+          <Draggable draggableId={task._id.toString()} index={index} key={task._id} isDragDisabled={task.status === 'done'}>
+            {(provided) => (
+              <li
+                className="task"
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+              >
+                <TaskItem task={task} onDelete={onDelete} onEdit={onEdit} />
+              </li>
+            )}
+          </Draggable>
+        ))
+      )}
     </ul>
   );
 }
@@ -275,7 +268,7 @@ function TaskItem({ task, onDelete, onEdit }) {
 
   const save = () => {
     const val = draft.trim();
-    if (val && val !== task.title) onEdit(task.id, val);
+    if (val && val !== task.title) onEdit(task._id, val);
     setIsEditing(false);
   };
 
@@ -294,7 +287,7 @@ function TaskItem({ task, onDelete, onEdit }) {
         <button
           className="iconBtn danger"
           title="Delete"
-          onClick={() => onDelete(task.id)}
+          onClick={() => onDelete(task._id)}
           aria-label="Delete task"
         >
           🗑️
