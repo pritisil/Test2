@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import axios from "axios";
 import "./App.css";
 
@@ -99,19 +98,14 @@ export default function App() {
     }
   };
 
-  // ✅ Drag and drop handler (update status in DB)
-  const onDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-    if (!destination || source.droppableId === destination.droppableId) return;
-
-    const destStatus = destination.droppableId;
-
+  // ✅ Handle drop (update status in DB)
+  const handleDrop = async (taskId, newStatus) => {
     try {
-      const res = await axios.put(`${API_URL}/${draggableId}`, {
-        status: destStatus,
+      const res = await axios.put(`${API_URL}/${taskId}`, {
+        status: newStatus,
       });
       setTasks((prev) =>
-        prev.map((t) => (t._id.toString() === draggableId ? res.data : t))
+        prev.map((t) => (t._id === taskId ? res.data : t))
       );
     } catch (err) {
       console.error("Error updating task status:", err);
@@ -126,45 +120,45 @@ export default function App() {
         <h1>TO DO APP</h1>
       </header>
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <main className="board">
-          <Column
-            key={STATUSES.TODO}
-            title="Todo"
-            status={STATUSES.TODO}
-            showAdd
-            onAdd={() => openAddModal(STATUSES.TODO)}
-          >
-            <TaskList
-              items={tasksByStatus(STATUSES.TODO)}
-              onDelete={openDeleteModal}
-              onEdit={handleEdit}
-            />
-          </Column>
+      <main className="board">
+        <Column
+          key={STATUSES.TODO}
+          title="Todo"
+          status={STATUSES.TODO}
+          showAdd
+          onAdd={() => openAddModal(STATUSES.TODO)}
+          onDrop={handleDrop}
+        >
+          <TaskList
+            items={tasksByStatus(STATUSES.TODO)}
+            onDelete={openDeleteModal}
+            onEdit={handleEdit}
+          />
+        </Column>
 
-          <Column
-            key={STATUSES.INPROGRESS}
-            title="In Progress"
-            status={STATUSES.INPROGRESS}
-            showAdd
-            onAdd={() => openAddModal(STATUSES.INPROGRESS)}
-          >
-            <TaskList
-              items={tasksByStatus(STATUSES.INPROGRESS)}
-              onDelete={openDeleteModal}
-              onEdit={handleEdit}
-            />
-          </Column>
+        <Column
+          key={STATUSES.INPROGRESS}
+          title="In Progress"
+          status={STATUSES.INPROGRESS}
+          showAdd
+          onAdd={() => openAddModal(STATUSES.INPROGRESS)}
+          onDrop={handleDrop}
+        >
+          <TaskList
+            items={tasksByStatus(STATUSES.INPROGRESS)}
+            onDelete={openDeleteModal}
+            onEdit={handleEdit}
+          />
+        </Column>
 
-          <Column key={STATUSES.DONE} title="Done" status={STATUSES.DONE}>
-            <TaskList
-              items={tasksByStatus(STATUSES.DONE)}
-              onDelete={openDeleteModal}
-              onEdit={handleEdit}
-            />
-          </Column>
-        </main>
-      </DragDropContext>
+        <Column key={STATUSES.DONE} title="Done" status={STATUSES.DONE} onDrop={handleDrop}>
+          <TaskList
+            items={tasksByStatus(STATUSES.DONE)}
+            onDelete={openDeleteModal}
+            onEdit={handleEdit}
+          />
+        </Column>
+      </main>
 
       {/* Add Task Modal */}
       {isModalOpen && (
@@ -193,209 +187,220 @@ export default function App() {
   );
 }
 
-/* ======== keep your Column, TaskList, TaskItem, AddTaskModal, DeleteTaskModal same ======== */
+// /* ======== keep your Column, TaskList, TaskItem, AddTaskModal, DeleteTaskModal same ======== */
 
 
-/* ====================== Components ====================== */
+// /* ====================== Components ====================== */
 
-function Column({ title, status, showAdd = false, onAdd, children }) {
-  return (
-    <section className="column">
-      <div className="column__header">
-        <h2>{title}</h2>
-        {showAdd && (
-          <button
-            className="iconBtn"
-            onClick={onAdd}
-            aria-label={`Add in ${title}`}
-          >
-            +
-          </button>
-        )}
-      </div>
-      <Droppable droppableId={status} type="TASK" isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
-        {(provided) => (
-          <div
-            className="column__body"
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-          >
-            {children}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </section>
-  );
-}
+// function Column({ title, status, showAdd = false, onAdd, onDrop, children }) {
+//   const handleDragOver = (e) => {
+//     e.preventDefault();
+//   };
 
-function TaskList({ items, onDelete, onEdit }) {
-  return (
-    <ul className="tasklist">
-      {items.length === 0 ? (
-        <div className="empty">No tasks yet</div>
-      ) : (
-        items.map((task, index) => (
-          <Draggable draggableId={task._id.toString()} index={index} key={task._id} isDragDisabled={task.status === 'done'}>
-            {(provided) => (
-              <li
-                className="task"
-                ref={provided.innerRef}
-                {...provided.draggableProps}
-                {...provided.dragHandleProps}
-              >
-                <TaskItem task={task} onDelete={onDelete} onEdit={onEdit} />
-              </li>
-            )}
-          </Draggable>
-        ))
-      )}
-    </ul>
-  );
-}
+//   const handleDrop = (e) => {
+//     e.preventDefault();
+//     const taskId = e.dataTransfer.getData('taskId');
+//     const currentStatus = e.dataTransfer.getData('currentStatus');
+//     if (taskId && currentStatus !== status) {
+//       onDrop(taskId, status);
+//     }
+//   };
 
-function TaskItem({ task, onDelete, onEdit }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(task.title);
-  const inputRef = useRef(null);
+//   return (
+//     <section className="column">
+//       <div className="column__header">
+//         <h2>{title}</h2>
+//         {showAdd && (
+//           <button
+//             className="iconBtn"
+//             onClick={onAdd}
+//             aria-label={`Add in ${title}`}
+//           >
+//             +
+//           </button>
+//         )}
+//       </div>
+//       <div
+//         className="column__body"
+//         onDragOver={handleDragOver}
+//         onDrop={handleDrop}
+//       >
+//         {children}
+//       </div>
+//     </section>
+//   );
+// }
 
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
+// function TaskList({ items, onDelete, onEdit }) {
+//   return (
+//     <ul className="tasklist">
+//       {items.length === 0 ? (
+//         <div className="empty">No tasks yet</div>
+//       ) : (
+//         items.map((task) => (
+//           <TaskItem key={task._id} task={task} onDelete={onDelete} onEdit={onEdit} />
+//         ))
+//       )}
+//     </ul>
+//   );
+// }
 
-  const save = () => {
-    const val = draft.trim();
-    if (val && val !== task.title) onEdit(task._id, val);
-    setIsEditing(false);
-  };
+// function TaskItem({ task, onDelete, onEdit }) {
+//   const [isEditing, setIsEditing] = useState(false);
+//   const [draft, setDraft] = useState(task.title);
+//   const inputRef = useRef(null);
 
-  return !isEditing ? (
-    <>
-      <span className="task__title">{task.title}</span>
-      <div className="task__actions">
-        <button
-          className="iconBtn"
-          title="Edit"
-          onClick={() => setIsEditing(true)}
-          aria-label="Edit task"
-        >
-          ✏️
-        </button>
-        <button
-          className="iconBtn danger"
-          title="Delete"
-          onClick={() => onDelete(task._id)}
-          aria-label="Delete task"
-        >
-          🗑️
-        </button>
-      </div>
-    </>
-  ) : (
-    <form
-      className="task__edit"
-      onSubmit={(e) => {
-        e.preventDefault();
-        save();
-      }}
-    >
-      <input
-        ref={inputRef}
-        className="input"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") setIsEditing(false);
-        }}
-        aria-label="Edit task title"
-      />
-      <div className="edit__actions">
-        <button type="submit" className="btn">
-          Save
-        </button>
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => setIsEditing(false)}
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-}
+//   useEffect(() => {
+//     if (isEditing && inputRef.current) {
+//       inputRef.current.focus();
+//       inputRef.current.select();
+//     }
+//   }, [isEditing]);
 
-function AddTaskModal({ title, value, onChange, onClose, onSubmit }) {
-  const inputRef = useRef(null);
+//   const save = () => {
+//     const val = draft.trim();
+//     if (val && val !== task.title) onEdit(task._id, val);
+//     setIsEditing(false);
+//   };
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+//   const handleDragStart = (e) => {
+//     e.dataTransfer.setData('taskId', task._id);
+//     e.dataTransfer.setData('currentStatus', task.status);
+//   };
 
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+//   return (
+//     <li
+//       className="task"
+//       draggable={task.status !== 'done'}
+//       onDragStart={handleDragStart}
+//       style={{ opacity: task.status === 'done' ? 0.6 : 1 }}
+//     >
+//       {!isEditing ? (
+//         <>
+//           <span className="task__title">{task.title}</span>
+//           <div className="task__actions">
+//             <button
+//               className="iconBtn"
+//               title="Edit"
+//               onClick={() => setIsEditing(true)}
+//               aria-label="Edit task"
+//             >
+//               ✏️
+//             </button>
+//             <button
+//               className="iconBtn danger"
+//               title="Delete"
+//               onClick={() => onDelete(task._id)}
+//               aria-label="Delete task"
+//             >
+//               🗑️
+//             </button>
+//           </div>
+//         </>
+//       ) : (
+//         <form
+//           className="task__edit"
+//           onSubmit={(e) => {
+//             e.preventDefault();
+//             save();
+//           }}
+//         >
+//           <input
+//             ref={inputRef}
+//             className="input"
+//             value={draft}
+//             onChange={(e) => setDraft(e.target.value)}
+//             onKeyDown={(e) => {
+//               if (e.key === "Escape") setIsEditing(false);
+//             }}
+//             aria-label="Edit task title"
+//           />
+//           <div className="edit__actions">
+//             <button type="submit" className="btn">
+//               Save
+//             </button>
+//             <button
+//               type="button"
+//               className="btn ghost"
+//               onClick={() => setIsEditing(false)}
+//             >
+//               Cancel
+//             </button>
+//           </div>
+//         </form>
+//       )}
+//     </li>
+//   );
+// }
 
-  return (
-    <div className="modal__backdrop">
-      <div className="modal">
-        <div className="modal__header">
-          <h3>{title}</h3>
-          <button className="iconBtn" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-        <form onSubmit={onSubmit} className="modal__form">
-          <label className="label">
-            Task title
-            <input
-              ref={inputRef}
-              className="input"
-              placeholder="Type task…"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-            />
-          </label>
-          <button type="submit" className="btn primary" disabled={!value.trim()}>
-            Add Task
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
+// function AddTaskModal({ title, value, onChange, onClose, onSubmit }) {
+//   const inputRef = useRef(null);
 
-function DeleteTaskModal({ onClose, onSubmit, value, onChange, error }) {
-  return (
-    <div className="modal__backdrop">
-      <div className="modal">
-        <div className="modal__header">
-          <h3>Confirm Delete</h3>
-          <button className="iconBtn" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-        <form onSubmit={onSubmit} className="modal__form">
-          <label className="label">
-            Type delete to confirm
-            <input
-              className="input"
-              placeholder="Type here..."
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-            />
-          </label>
-          {error && <div className="error">{error}</div>}
-          <button type="submit" className="btn danger">
-            Delete
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
+//   useEffect(() => {
+//     inputRef.current?.focus();
+//   }, []);
+
+//   useEffect(() => {
+//     const onKey = (e) => e.key === "Escape" && onClose();
+//     window.addEventListener("keydown", onKey);
+//     return () => window.removeEventListener("keydown", onKey);
+//   }, [onClose]);
+
+//   return (
+//     <div className="modal__backdrop">
+//       <div className="modal">
+//         <div className="modal__header">
+//           <h3>{title}</h3>
+//           <button className="iconBtn" onClick={onClose}>
+//             ✕
+//           </button>
+//         </div>
+//         <form onSubmit={onSubmit} className="modal__form">
+//           <label className="label">
+//             Task title
+//             <input
+//               ref={inputRef}
+//               className="input"
+//               placeholder="Type task…"
+//               value={value}
+//               onChange={(e) => onChange(e.target.value)}
+//             />
+//           </label>
+//           <button type="submit" className="btn primary" disabled={!value.trim()}>
+//             Add Task
+//           </button>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// }
+
+// function DeleteTaskModal({ onClose, onSubmit, value, onChange, error }) {
+//   return (
+//     <div className="modal__backdrop">
+//       <div className="modal">
+//         <div className="modal__header">
+//           <h3>Confirm Delete</h3>
+//           <button className="iconBtn" onClick={onClose}>
+//             ✕
+//           </button>
+//         </div>
+//         <form onSubmit={onSubmit} className="modal__form">
+//           <label className="label">
+//             Type delete to confirm
+//             <input
+//               className="input"
+//               placeholder="Type here..."
+//               value={value}
+//               onChange={(e) => onChange(e.target.value)}
+//             />
+//           </label>
+//           {error && <div className="error">{error}</div>}
+//           <button type="submit" className="btn danger">
+//             Delete
+//           </button>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// }
