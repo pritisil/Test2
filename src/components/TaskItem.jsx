@@ -34,14 +34,16 @@ const TaskItem = ({ task, onDelete, onEdit }) => {
         <>
           <span className="task__title">{task.title}</span>
           <div className="task__actions">
-            <button
-              className="iconBtn"
-              title="Edit"
-              onClick={() => setIsEditing(true)}
-              aria-label="Edit task"
-            >
-              ✏️
-            </button>
+            {task.status !== "done" && (
+              <button
+                className="iconBtn"
+                title="Edit"
+                onClick={() => setIsEditing(true)}
+                aria-label="Edit task"
+              >
+                ✏️
+              </button>
+            )}
             <button
               className="iconBtn danger"
               title="Delete"
