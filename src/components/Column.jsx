@@ -4,6 +4,8 @@ const Column = ({
   showAdd = false,
   onAdd,
   onDrop,
+  showDelete = false,
+  onDelete,
   children,
 }) => {
   const handleDragOver = (e) => {
@@ -23,15 +25,26 @@ const Column = ({
     <section className="column">
       <div className="column__header">
         <h2>{title}</h2>
-        {showAdd && (
-          <button
-            className="iconBtn"
-            onClick={onAdd}
-            aria-label={`Add in ${title}`}
-          >
-            +
-          </button>
-        )}
+        <div className="column__actions">
+          {showAdd && (
+            <button
+              className="iconBtn"
+              onClick={onAdd}
+              aria-label={`Add in ${title}`}
+            >
+              +
+            </button>
+          )}
+          {showDelete && (
+            <button
+              className="iconBtn delete-btn"
+              onClick={onDelete}
+              aria-label={`Delete ${title} column`}
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
       <div
         className="column__body"

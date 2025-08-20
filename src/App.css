@@ -51,9 +51,12 @@ body {
 
 .board {
   margin-top: 20px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
+  overflow-x: auto;
+  /* max-width: 100%; */
 }
 
 .column {
@@ -63,6 +66,7 @@ body {
   padding: 20px;
   backdrop-filter: blur(6px);
   min-width: 280px;
+  flex-shrink: 0;
 }
 
 .column__header {
@@ -72,6 +76,9 @@ body {
   margin-bottom: 12px;
 }
 .column__header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.column__actions { display: flex; gap: 8px; }
+.delete-btn { color: var(--danger); }
+.delete-btn:hover { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,0.25); }
 .column__body { display: flex; flex-direction: column; gap: 12px; }
 
 .iconBtn {
@@ -139,6 +146,15 @@ body {
   border-radius: 12px;
 }
 
+/* Dragging */
+.task[draggable="true"] {
+  cursor: grab;
+}
+.task[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.5;
+}
+
 /* Modal */
 .modal__backdrop {
   position: fixed; inset: 0;
@@ -159,7 +175,73 @@ body {
 .modal__form { display: flex; flex-direction: column; gap: 14px; }
 .label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
 
+/* Add Column Styles */
+.add-column {
+  background: rgba(17, 24, 39, 0.3);
+  border: 2px dashed rgba(148, 163, 184, 0.25);
+  border-radius: 16px;
+  padding: 20px;
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-column-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 20px;
+  border-radius: 12px;
+  transition: 150ms ease;
+  width: 100%;
+}
+.add-column-btn:hover {
+  color: var(--text);
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.add-column-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.add-column-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.add-column-actions button {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 150ms ease;
+}
+
+.add-column-actions button:first-child {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.add-column-actions button:hover {
+  border-color: var(--accent);
+}
+
 /* Responsive */
 @media (max-width: 900px) {
-  .board { grid-template-columns: 1fr; }
+  .board { 
+    padding: 0 20px;
+  }
+  .column {
+    min-width: 250px;
+  }
 }
